@@ -7,7 +7,7 @@ import kotlin.math.log10
 fun main() {
     val input = File("input.txt").readLines()
 
-    val indexedNumberLines = input.map { it.parseNumbersWithPositions() }
+    val indexedNumberLines = input.map { it.parseNumbersWithIndices() }
     val symbolIndices = input.map { it.findSymbolIndices() }
 
     val sumOfSerialNumbers = indexedNumberLines.flatMapIndexed { lineIndex, indexedNumbers ->
@@ -48,16 +48,16 @@ fun main() {
 
 val numberRegex = """\d+""".toRegex()
 
-private fun String.parseNumbersWithPositions(): List<IndexedValue<Int>> = numberRegex.findAll(this).map {
+private fun String.parseNumbersWithIndices(): List<IndexedValue<Int>> = numberRegex.findAll(this).map {
     IndexedValue(
         index = it.range.first,
         value = it.value.toInt(),
     )
 }.toList()
 
-fun String.findSymbolIndices(): List<Int> = mapIndexedNotNull { index, char ->
-    if ("""[^\d.]""".toRegex().matches(char.toString())) index else null
-}
+val symbolRegex = """[^\d.]""".toRegex()
+
+fun String.findSymbolIndices(): List<Int> = symbolRegex.findAll(this).map { it.range.first }.toList()
 
 fun IndexedValue<Int>.isAdjacentSymbolInSameLine(symbolIndices: List<Int>): Boolean =
     symbolIndices.find { it == index - 1 || it == index + value.decimalPositions } != null
