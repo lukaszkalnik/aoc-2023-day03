@@ -46,36 +46,14 @@ fun main() {
     println(sumOfSerialNumbers)
 }
 
-private fun String.parseNumbersWithPositions(): List<IndexedValue<Int>> {
-    val numbersWithPositions = mutableListOf<IndexedValue<Int>>()
-    val iterator = iterator().withIndex()
+val numberRegex = """\d+""".toRegex()
 
-    while (iterator.hasNext()) {
-        var numberString = ""
-        var index = 0
-        val indexedChar = iterator.next()
-
-        if (indexedChar.value.isDigit()) {
-            numberString += indexedChar.value
-            index = indexedChar.index
-
-            while (iterator.hasNext()) {
-                val nextIndexedChar = iterator.next()
-                if (nextIndexedChar.value.isDigit()) {
-                    numberString += nextIndexedChar.value
-                } else break
-            }
-            numbersWithPositions.add(
-                IndexedValue(
-                    value = numberString.toInt(),
-                    index = index,
-                )
-            )
-        }
-    }
-
-    return numbersWithPositions
-}
+private fun String.parseNumbersWithPositions(): List<IndexedValue<Int>> = numberRegex.findAll(this).map {
+    IndexedValue(
+        index = it.range.first,
+        value = it.value.toInt(),
+    )
+}.toList()
 
 fun String.findSymbolIndices(): List<Int> = mapIndexedNotNull { index, char ->
     if ("""[^\d.]""".toRegex().matches(char.toString())) index else null
