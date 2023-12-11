@@ -5,8 +5,24 @@ import java.io.File
 fun main() {
     val input = File("input.txt").readLines()
 
-    val numbersWithPositions = input.first().parseNumbersWithPositions()
-    println(numbersWithPositions)
+    val indexedNumbers = input.map { it.parseNumbersWithPositions() }
+    val symbolIndices = input[1].findSymbolIndices()
+    println(symbolIndices)
+
+//    indexedNumbers.filterIndexed { lineIndex, indexedNumber ->
+//        when {
+//            lineIndex == 0 -> {
+//                val inputLines = input.take(2)
+//
+//            }
+//            lineIndex == indexedNumbers.lastIndex -> {
+//                val inputLines = input.takeLast(2)
+//            }
+//            else -> {
+//                val inputLines = listOf(input[lineIndex - 1], input[lineIndex], input[lineIndex + 1])
+//            }
+//        }
+//    }
 }
 
 private fun String.parseNumbersWithPositions(): List<IndexedValue<Int>> {
@@ -41,3 +57,9 @@ private fun String.parseNumbersWithPositions(): List<IndexedValue<Int>> {
 
     return numbersWithPositions
 }
+
+fun String.findSymbolIndices(): List<Int> = mapIndexedNotNull { index, char ->
+    if ("""[^\d.]""".toRegex().matches(char.toString())) index else null
+}
+
+fun IndexedValue<Int>.checkIfSymbolInAnotherLine(inputLine: String): Boolean = true
