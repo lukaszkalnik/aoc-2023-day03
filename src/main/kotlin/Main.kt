@@ -63,9 +63,7 @@ private fun String.parseNumbersWithPositions(): List<IndexedValue<Int>> {
                 val nextIndexedChar = iterator.next()
                 if (nextIndexedChar.value.isDigit()) {
                     numberString += nextIndexedChar.value
-                } else {
-                    break
-                }
+                } else break
             }
             numbersWithPositions.add(
                 IndexedValue(
