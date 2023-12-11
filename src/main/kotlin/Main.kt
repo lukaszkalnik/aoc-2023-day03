@@ -1,28 +1,49 @@
 package org.example
 
 import java.io.File
+import kotlin.math.abs
+import kotlin.math.log10
 
 fun main() {
     val input = File("input.txt").readLines()
 
-    val indexedNumbers = input.map { it.parseNumbersWithPositions() }
-    val symbolIndices = input[1].findSymbolIndices()
-    println(symbolIndices)
+    val indexedNumberLines = input.map { it.parseNumbersWithPositions() }
+    val symbolIndices = input.map { it.findSymbolIndices() }
 
-//    indexedNumbers.filterIndexed { lineIndex, indexedNumber ->
-//        when {
-//            lineIndex == 0 -> {
-//                val inputLines = input.take(2)
-//
-//            }
-//            lineIndex == indexedNumbers.lastIndex -> {
-//                val inputLines = input.takeLast(2)
-//            }
-//            else -> {
-//                val inputLines = listOf(input[lineIndex - 1], input[lineIndex], input[lineIndex + 1])
-//            }
-//        }
-//    }
+    val sumOfSerialNumbers = indexedNumberLines.flatMapIndexed { lineIndex, indexedNumbers ->
+        when (lineIndex) {
+            0 -> {
+                val adjacentSymbolLines = symbolIndices.take(2)
+
+                indexedNumbers.filter {
+                    it.isAdjacentSymbolInSameLine(adjacentSymbolLines[0]) ||
+                            it.isAdjacentSymbolInNeigbouringLine(adjacentSymbolLines[1])
+                }
+            }
+
+            indexedNumberLines.lastIndex -> {
+                val adjacentSymbolLines = symbolIndices.takeLast(2)
+
+                indexedNumbers.filter {
+                    it.isAdjacentSymbolInNeigbouringLine(adjacentSymbolLines[0]) ||
+                            it.isAdjacentSymbolInSameLine(adjacentSymbolLines[1])
+                }
+            }
+
+            else -> {
+                val adjacentSymbolLines =
+                    listOf(symbolIndices[lineIndex - 1], symbolIndices[lineIndex], symbolIndices[lineIndex + 1])
+
+                indexedNumbers.filter {
+                    it.isAdjacentSymbolInNeigbouringLine(adjacentSymbolLines[0]) ||
+                            it.isAdjacentSymbolInSameLine(adjacentSymbolLines[1]) ||
+                            it.isAdjacentSymbolInNeigbouringLine(adjacentSymbolLines[2])
+                }
+            }
+        }
+    }.sumOf { it.value }
+
+    println(sumOfSerialNumbers)
 }
 
 private fun String.parseNumbersWithPositions(): List<IndexedValue<Int>> {
@@ -43,15 +64,15 @@ private fun String.parseNumbersWithPositions(): List<IndexedValue<Int>> {
                 if (nextIndexedChar.value.isDigit()) {
                     numberString += nextIndexedChar.value
                 } else {
-                    numbersWithPositions.add(
-                        IndexedValue(
-                            value = numberString.toInt(),
-                            index = index,
-                        )
-                    )
                     break
                 }
             }
+            numbersWithPositions.add(
+                IndexedValue(
+                    value = numberString.toInt(),
+                    index = index,
+                )
+            )
         }
     }
 
@@ -62,4 +83,14 @@ fun String.findSymbolIndices(): List<Int> = mapIndexedNotNull { index, char ->
     if ("""[^\d.]""".toRegex().matches(char.toString())) index else null
 }
 
-fun IndexedValue<Int>.checkIfSymbolInAnotherLine(inputLine: String): Boolean = true
+fun IndexedValue<Int>.isAdjacentSymbolInSameLine(symbolIndices: List<Int>): Boolean =
+    symbolIndices.find { it == index - 1 || it == index + value.decimalPositions } != null
+
+fun IndexedValue<Int>.isAdjacentSymbolInNeigbouringLine(symbolIndices: List<Int>): Boolean =
+    symbolIndices.find { it in index - 1..index + value.decimalPositions } != null
+
+val Int.decimalPositions
+    get() = when (this) {
+        0 -> 1
+        else -> log10(abs(toDouble())).toInt() + 1
+    }
