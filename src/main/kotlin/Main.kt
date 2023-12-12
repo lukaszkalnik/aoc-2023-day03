@@ -8,42 +8,45 @@ fun main() {
     val input = File("input.txt").readLines()
 
     val indexedNumberLines = input.map { it.parseNumbersWithIndices() }
-    val symbolIndices = input.map { it.findSymbolIndices() }
+    val symbolIndexLines = input.map { it.findSymbolIndices() }
 
-    val sumOfSerialNumbers = indexedNumberLines.flatMapIndexed { lineIndex, indexedNumbers ->
+    val sumOfGearRatios: Int = symbolIndexLines.flatMapIndexed { lineIndex, symbolIndices ->
         when (lineIndex) {
             0 -> {
-                val adjacentSymbolLines = symbolIndices.take(2)
+                val adjacentNumberLines = indexedNumberLines.take(2)
 
-                indexedNumbers.filter {
-                    it.isAdjacentSymbolInSameLine(adjacentSymbolLines[0]) ||
-                            it.isAdjacentSymbolInNeigbouringLine(adjacentSymbolLines[1])
-                }
+                symbolIndices.map {
+                    it.adjacentNumbersInSameLine(adjacentNumberLines[0]) +
+                            it.adjacentNumbersInNeighbouringLine(adjacentNumberLines[1])
+                }.filter { it.size == 2 }.map { it[0] * it[1] }
             }
 
-            indexedNumberLines.lastIndex -> {
-                val adjacentSymbolLines = symbolIndices.takeLast(2)
+            symbolIndexLines.lastIndex -> {
+                val adjacentNumberLines = indexedNumberLines.takeLast(2)
 
-                indexedNumbers.filter {
-                    it.isAdjacentSymbolInNeigbouringLine(adjacentSymbolLines[0]) ||
-                            it.isAdjacentSymbolInSameLine(adjacentSymbolLines[1])
-                }
+                symbolIndices.map {
+                    it.adjacentNumbersInNeighbouringLine(adjacentNumberLines[0]) +
+                            it.adjacentNumbersInSameLine(adjacentNumberLines[1])
+                }.filter { it.size == 2 }.map { it[0] * it[1] }
             }
 
             else -> {
-                val adjacentSymbolLines =
-                    listOf(symbolIndices[lineIndex - 1], symbolIndices[lineIndex], symbolIndices[lineIndex + 1])
+                val adjacentNumberLines = listOf(
+                    indexedNumberLines[lineIndex - 1],
+                    indexedNumberLines[lineIndex],
+                    indexedNumberLines[lineIndex + 1]
+                )
 
-                indexedNumbers.filter {
-                    it.isAdjacentSymbolInNeigbouringLine(adjacentSymbolLines[0]) ||
-                            it.isAdjacentSymbolInSameLine(adjacentSymbolLines[1]) ||
-                            it.isAdjacentSymbolInNeigbouringLine(adjacentSymbolLines[2])
-                }
+                symbolIndices.map {
+                    it.adjacentNumbersInNeighbouringLine(adjacentNumberLines[0]) +
+                            it.adjacentNumbersInSameLine(adjacentNumberLines[1]) +
+                            it.adjacentNumbersInNeighbouringLine(adjacentNumberLines[2])
+                }.filter { it.size == 2 }.map { it[0] * it[1] }
             }
         }
-    }.sumOf { it.value }
+    }.sumOf { it }
 
-    println(sumOfSerialNumbers)
+    println(sumOfGearRatios)
 }
 
 val numberRegex = """\d+""".toRegex()
@@ -55,15 +58,15 @@ private fun String.parseNumbersWithIndices(): List<IndexedValue<Int>> = numberRe
     )
 }.toList()
 
-val symbolRegex = """[^\d.]""".toRegex()
+val symbolRegex = """\*""".toRegex()
 
 fun String.findSymbolIndices(): List<Int> = symbolRegex.findAll(this).map { it.range.first }.toList()
 
-fun IndexedValue<Int>.isAdjacentSymbolInSameLine(symbolIndices: List<Int>): Boolean =
-    symbolIndices.find { it == index - 1 || it == index + value.decimalPositions } != null
+fun Int.adjacentNumbersInSameLine(indexedNumbers: List<IndexedValue<Int>>): List<Int> =
+    indexedNumbers.filter { it.index - 1 == this || it.index + it.value.decimalPositions == this }.map { it.value }
 
-fun IndexedValue<Int>.isAdjacentSymbolInNeigbouringLine(symbolIndices: List<Int>): Boolean =
-    symbolIndices.find { it in index - 1..index + value.decimalPositions } != null
+fun Int.adjacentNumbersInNeighbouringLine(indexedNumbers: List<IndexedValue<Int>>): List<Int> =
+    indexedNumbers.filter { this in it.index - 1..it.index + it.value.decimalPositions }.map { it.value }
 
 val Int.decimalPositions
     get() = when (this) {
